@@ -3,6 +3,7 @@ package com.example.rickandmortymultiverse
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -45,20 +46,49 @@ class MainActivity : ComponentActivity() {
 
         val apiService = retrofit.create(RickAndMortyApiService::class.java)
 
+
         setContent {
+
             var characterList by remember { mutableStateOf<List<Character>>(emptyList()) }
             var errorMessage by remember { mutableStateOf("") }
+            var isLoading by remember { mutableStateOf(true) }
 
             LaunchedEffect(key1 = Unit) {
                 try {
+                    isLoading = true
                     val response = apiService.getCharacters()
                     characterList = response.results
                 } catch (e: Exception) {
                     errorMessage = e.toString()
+                } finally {
+                    isLoading = false
                 }
             }
 
-            if (errorMessage.isNotEmpty()) {
+            if (isLoading) {
+                Column (
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFFFFFFF)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.loading_img),
+                        contentDescription = "Cargando personajes...",
+                        modifier = Modifier.size(360.dp)
+                    )
+                    Spacer(
+                        modifier = Modifier.height(16.dp)
+                    )
+                    Text(
+                        text = "Cargando...",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else if (errorMessage.isNotEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -67,7 +97,7 @@ class MainActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.Center
                 ) {
 
-                    androidx.compose.foundation.Image(
+                    Image(
                         painter = painterResource(id = R.drawable.error_img),
                         contentDescription = "Imagen de error",
                         modifier = Modifier.size(360.dp)
@@ -94,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             } else {
+
                 CharacterGridScreen(characters = characterList)
             }
         }
@@ -102,6 +133,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun CharacterGridScreen (characters: List<Character>) {
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier
